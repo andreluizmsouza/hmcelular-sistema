@@ -1,0 +1,182 @@
+version: '3.8'
+
+services:
+  # ====================================
+  # BANCO DE DADOS MYSQL
+  # ====================================
+  mysql:
+    image: mysql:8.0
+    container_name: hmcelular-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password_muito_segura_2024}
+      MYSQL_DATABASE: ${DB_NAME:-hmcelular_db}
+      MYSQL_USER: ${DB_USER:-hmcelular}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-hmcelular_password_segura_2024}
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/database:/docker-entrypoint-initdb.d:ro
+      - ./backup:/var/backup
+    ports:
+      - "3306:3306"
+    networks:
+      - hmcelular-network
+    restart: unless-stopped
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=256M
+      --max-connections=100
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_password_muito_segura_2024}"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+      start_period: 60s
+
+  # ====================================
+  # BACKEND NODE.JS
+  # ====================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hmcelular-backend
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DB_HOST: mysql
+      DB_USER: ${DB_USER:-hmcelular}
+      DB_PASSWORD: ${DB_PASSWORD:-hmcelular_password_segura_2024}
+      DB_NAME: ${DB_NAME:-hmcelular_db}
+      DB_PORT: 3306
+      JWT_SECRET: ${JWT_SECRET:-jwt_secret_muito_muito_segura_2024}
+      JWT_EXPIRE: ${JWT_EXPIRE:-7d}
+      PORT: 3001
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+    ports:
+      - "3001:3001"
+    networks:
+      - hmcelular-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+      - ./backup:/app/backup
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ====================================
+  # FRONTEND REACT
+  # ====================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-/api}
+    container_name: hmcelular-frontend
+    ports:
+      - "3000:80"
+    networks:
+      - hmcelular-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ====================================
+  # NGINX REVERSE PROXY
+  # ====================================
+  nginx:
+    image: nginx:alpine
+    container_name: hmcelular-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/ssl/certs:ro
+      - ./logs/nginx:/var/log/nginx
+    networks:
+      - hmcelular-network
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ====================================
+  # BACKUP AUTOMÁTICO
+  # ====================================
+  backup:
+    image: mysql:8.0
+    container_name: hmcelular-backup
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: ${DB_USER:-hmcelular}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-hmcelular_password_segura_2024}
+      MYSQL_DATABASE: ${DB_NAME:-hmcelular_db}
+      BACKUP_SCHEDULE: "0 2 * * *"
+      BACKUP_RETENTION: 7
+    volumes:
+      - ./backup:/var/backup
+      - ./scripts:/var/scripts:ro
+    networks:
+      - hmcelular-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    command: |
+      sh -c '
+        echo "Iniciando serviço de backup..."
+        while true; do
+          current_hour=$$(date +%H)
+          if [ "$$current_hour" -eq 2 ]; then
+            echo "$$(date): Iniciando backup automático..."
+            mysqldump -h mysql -u $$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE > /var/backup/backup_$$(date +%Y%m%d_%H%M%S).sql
+            find /var/backup -name "backup_*.sql" -mtime +$$BACKUP_RETENTION -delete
+            echo "$$(date): Backup concluído!"
+            sleep 3600
+          fi
+          sleep 1800
+        done
+      '
+
+# ====================================
+# VOLUMES PERSISTENTES
+# ====================================
+volumes:
+  mysql_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/mysql
+
+# ====================================
+# REDES
+# ====================================
+networks:
+  hmcelular-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
