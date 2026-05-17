@@ -5,6 +5,8 @@ import {
   TrendingUp, TrendingDown, Minus
 } from 'lucide-react';
 import { authService, healthService, apiUtils } from './services/api';
+import PaginaProdutos from './pages/Produtos';
+import PaginaEstoque from './pages/Estoque';
 
 const SistemaHMCelular = () => {
   // Estados principais
@@ -236,6 +238,7 @@ const SistemaHMCelular = () => {
     const menuItems = [
       { id: 'dashboard', icon: BarChart3, label: 'Dashboard', permissao: null },
       { id: 'produtos', icon: Package, label: 'Produtos', permissao: 'produtos' },
+      { id: 'estoque', icon: Store, label: 'Estoque', permissao: 'estoque' },
       { id: 'vendas', icon: ShoppingCart, label: 'Vendas', permissao: 'vendas' },
       { id: 'clientes', icon: Users, label: 'Clientes', permissao: 'clientes' },
       { id: 'relatorios', icon: FileText, label: 'Relatórios', permissao: 'relatorios' },
@@ -521,8 +524,9 @@ const SistemaHMCelular = () => {
                 { item: 'Backend Online', status: 'online' },
                 { item: 'Banco de Dados', status: 'online' },
                 { item: 'Autenticação JWT', status: 'online' },
-                { item: 'Etapa 2: Produtos', status: 'desenvolvimento' },
-                { item: 'Etapa 3: Clientes', status: 'planejado' }
+                { item: 'Produtos & Estoque', status: 'online' },
+                { item: 'Vendas (POS)', status: 'planejado' },
+                { item: 'Clientes', status: 'planejado' }
               ].map((status, index) => (
                 <div key={index} className="flex items-center gap-3">
                   <div className={`w-3 h-3 rounded-full ${
@@ -592,7 +596,9 @@ const SistemaHMCelular = () => {
       case 'dashboard':
         return <Dashboard />;
       case 'produtos':
-        return <PaginaEmDesenvolvimento titulo="Produtos" />;
+        return <PaginaProdutos onAbrirMenu={() => setSidebarOpen(true)} />;
+      case 'estoque':
+        return <PaginaEstoque onAbrirMenu={() => setSidebarOpen(true)} currentUser={currentUser} />;
       case 'vendas':
         return <PaginaEmDesenvolvimento titulo="Vendas" />;
       case 'clientes':

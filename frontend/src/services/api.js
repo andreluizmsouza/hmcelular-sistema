@@ -153,42 +153,76 @@ export const healthService = {
   }
 };
 
-// Serviços para futuras funcionalidades
-export const productService = {
-  // Placeholder para Fase 2
-  async getAll() {
-    throw new Error('Funcionalidade será implementada na Fase 2');
-  },
+// Constrói querystring a partir de objeto (ignorando vazios)
+const buildQuery = (params = {}) => {
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') qs.append(k, v);
+  });
+  const s = qs.toString();
+  return s ? `?${s}` : '';
+};
 
-  async getById(id) {
-    throw new Error('Funcionalidade será implementada na Fase 2');
+// Categorias
+export const categoriaService = {
+  async listar(params) {
+    return api.get(`/categorias${buildQuery(params)}`);
   },
-
-  async create(product) {
-    throw new Error('Funcionalidade será implementada na Fase 2');
+  async obter(id) {
+    return api.get(`/categorias/${id}`);
   },
-
-  async update(id, product) {
-    throw new Error('Funcionalidade será implementada na Fase 2');
+  async criar(categoria) {
+    return api.post('/categorias', categoria);
   },
-
-  async delete(id) {
-    throw new Error('Funcionalidade será implementada na Fase 2');
+  async atualizar(id, categoria) {
+    return api.put(`/categorias/${id}`, categoria);
+  },
+  async desativar(id) {
+    return api.delete(`/categorias/${id}`);
   }
 };
 
+// Produtos
+export const productService = {
+  async listar(params) {
+    return api.get(`/produtos${buildQuery(params)}`);
+  },
+  async obter(id) {
+    return api.get(`/produtos/${id}`);
+  },
+  async criar(produto) {
+    return api.post('/produtos', produto);
+  },
+  async atualizar(id, produto) {
+    return api.put(`/produtos/${id}`, produto);
+  },
+  async desativar(id) {
+    return api.delete(`/produtos/${id}`);
+  },
+  async listarMarcas() {
+    return api.get('/produtos/marcas');
+  }
+};
+
+// Estoque
 export const stockService = {
-  // Placeholder para Fase 2
-  async getByStore(storeId) {
-    throw new Error('Funcionalidade será implementada na Fase 2');
+  async listar(params) {
+    return api.get(`/estoque${buildQuery(params)}`);
   },
-
-  async transfer(fromStoreId, toStoreId, productId, quantity) {
-    throw new Error('Funcionalidade será implementada na Fase 2');
+  async resumo() {
+    return api.get('/estoque/resumo');
   },
-
-  async adjust(storeId, productId, quantity, reason) {
-    throw new Error('Funcionalidade será implementada na Fase 2');
+  async historico(params) {
+    return api.get(`/estoque/historico${buildQuery(params)}`);
+  },
+  async atualizarLimites(id, dados) {
+    return api.put(`/estoque/${id}/limites`, dados);
+  },
+  async movimentar(dados) {
+    return api.post('/estoque/movimentar', dados);
+  },
+  async transferir(dados) {
+    return api.post('/estoque/transferir', dados);
   }
 };
 

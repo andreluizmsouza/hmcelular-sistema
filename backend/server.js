@@ -5,6 +5,9 @@ const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
+const categoriasRoutes = require('./routes/categorias');
+const produtosRoutes = require('./routes/produtos');
+const estoqueRoutes = require('./routes/estoque');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -55,6 +58,9 @@ app.use((req, res, next) => {
 
 // Rotas
 app.use('/api/auth', loginLimiter, authRoutes);
+app.use('/api/categorias', categoriasRoutes);
+app.use('/api/produtos', produtosRoutes);
+app.use('/api/estoque', estoqueRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -80,7 +86,13 @@ app.get('/api', (req, res) => {
             auth: '/api/auth',
             login: 'POST /api/auth/login',
             logout: 'POST /api/auth/logout',
-            me: 'GET /api/auth/me'
+            me: 'GET /api/auth/me',
+            categorias: '/api/categorias',
+            produtos: '/api/produtos',
+            estoque: '/api/estoque',
+            estoque_movimentar: 'POST /api/estoque/movimentar',
+            estoque_transferir: 'POST /api/estoque/transferir',
+            estoque_historico: 'GET /api/estoque/historico'
         }
     });
 });
