@@ -131,6 +131,36 @@ CREATE TABLE IF NOT EXISTS estoque (
     INDEX idx_quantidade (quantidade)
 );
 
+-- Tabela de Movimentações de Estoque (Fase 2)
+-- Registra TODA alteração de estoque para auditoria e rastreabilidade
+CREATE TABLE IF NOT EXISTS movimentacoes_estoque (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    produto_id INT NOT NULL,
+    loja_id INT NOT NULL,
+    tipo ENUM('entrada','saida','transferencia_saida','transferencia_entrada','ajuste','venda','devolucao') NOT NULL,
+    quantidade INT NOT NULL,
+    quantidade_antes INT NOT NULL,
+    quantidade_depois INT NOT NULL,
+    motivo VARCHAR(200),
+    observacoes TEXT,
+    loja_origem_id INT NULL,
+    loja_destino_id INT NULL,
+    usuario_id INT,
+    referencia_id INT NULL,
+    referencia_tipo VARCHAR(50) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE,
+    FOREIGN KEY (loja_id) REFERENCES lojas(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+    FOREIGN KEY (loja_origem_id) REFERENCES lojas(id) ON DELETE SET NULL,
+    FOREIGN KEY (loja_destino_id) REFERENCES lojas(id) ON DELETE SET NULL,
+    INDEX idx_produto (produto_id),
+    INDEX idx_loja (loja_id),
+    INDEX idx_tipo (tipo),
+    INDEX idx_created_at (created_at),
+    INDEX idx_usuario (usuario_id)
+);
+
 -- Limpar sessões expiradas automaticamente
 -- Criar evento para limpeza automática (se suportado)
 SET GLOBAL event_scheduler = ON;

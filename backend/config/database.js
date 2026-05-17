@@ -69,8 +69,25 @@ const executeQuery = async (query, params = []) => {
     }
 };
 
+// Helper para transações - garante commit/rollback automático
+const withTransaction = async (callback) => {
+    const connection = await promisePool.getConnection();
+    try {
+        await connection.beginTransaction();
+        const result = await callback(connection);
+        await connection.commit();
+        return result;
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
+    }
+};
+
 module.exports = {
     pool: promisePool,
     executeQuery,
+    withTransaction,
     testConnection
 };
