@@ -88,10 +88,11 @@ CREATE TABLE IF NOT EXISTS categorias (
     INDEX idx_pai (pai_id)
 );
 
--- Tabela de Produtos (preparação para Fase 2)
+-- Tabela de Produtos (Fase 2)
 CREATE TABLE IF NOT EXISTS produtos (
     id INT PRIMARY KEY AUTO_INCREMENT,
     codigo VARCHAR(50) UNIQUE,
+    tipo ENUM('produto','servico') DEFAULT 'produto',
     nome VARCHAR(200) NOT NULL,
     descricao TEXT,
     categoria_id INT,
@@ -99,9 +100,13 @@ CREATE TABLE IF NOT EXISTS produtos (
     modelo VARCHAR(100),
     cor VARCHAR(50),
     tamanho VARCHAR(50),
-    preco_custo DECIMAL(10,2),
-    preco_venda DECIMAL(10,2),
-    margem_lucro DECIMAL(5,2),
+    unidade_medida VARCHAR(20) DEFAULT 'UN',
+    preco_custo DECIMAL(10,2) DEFAULT 0,
+    preco_venda DECIMAL(10,2) DEFAULT 0,
+    margem_lucro DECIMAL(5,2) DEFAULT 0,
+    comissao DECIMAL(5,2) DEFAULT 0,
+    enviar_sms_previsao BOOLEAN DEFAULT FALSE,
+    previsao_retorno_dias INT DEFAULT 0,
     ativo BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -112,6 +117,15 @@ CREATE TABLE IF NOT EXISTS produtos (
     INDEX idx_ativo (ativo),
     INDEX idx_marca_modelo (marca, modelo)
 );
+
+-- Migração: adiciona colunas se a tabela já existir sem elas (ignora erro se coluna já existe)
+-- Estas linhas falham silenciosamente em MySQL 8+ se a coluna já existe
+ALTER TABLE produtos ADD COLUMN IF NOT EXISTS tipo ENUM('produto','servico') DEFAULT 'produto' AFTER codigo;
+ALTER TABLE produtos ADD COLUMN IF NOT EXISTS unidade_medida VARCHAR(20) DEFAULT 'UN' AFTER tamanho;
+ALTER TABLE produtos ADD COLUMN IF NOT EXISTS comissao DECIMAL(5,2) DEFAULT 0 AFTER margem_lucro;
+ALTER TABLE produtos ADD COLUMN IF NOT EXISTS enviar_sms_previsao BOOLEAN DEFAULT FALSE AFTER comissao;
+ALTER TABLE produtos ADD COLUMN IF NOT EXISTS previsao_retorno_dias INT DEFAULT 0 AFTER enviar_sms_previsao;
+
 
 -- Tabela de Estoque (preparação para Fase 2)
 CREATE TABLE IF NOT EXISTS estoque (

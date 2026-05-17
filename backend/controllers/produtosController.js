@@ -132,8 +132,10 @@ const criar = async (req, res) => {
         }
 
         const {
-            codigo, nome, descricao, categoria_id, marca, modelo,
-            cor, tamanho, preco_custo, preco_venda, criar_estoque_zerado
+            codigo, tipo, nome, descricao, categoria_id, marca, modelo,
+            cor, tamanho, unidade_medida, preco_custo, preco_venda,
+            comissao, enviar_sms_previsao, previsao_retorno_dias,
+            criar_estoque_zerado
         } = req.body;
 
         const resultado = await withTransaction(async (connection) => {
@@ -159,13 +161,17 @@ const criar = async (req, res) => {
 
             const [insertResult] = await connection.execute(
                 `INSERT INTO produtos
-                 (codigo, nome, descricao, categoria_id, marca, modelo, cor, tamanho,
-                  preco_custo, preco_venda, margem_lucro)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                 (codigo, tipo, nome, descricao, categoria_id, marca, modelo, cor, tamanho,
+                  unidade_medida, preco_custo, preco_venda, margem_lucro,
+                  comissao, enviar_sms_previsao, previsao_retorno_dias)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
-                    codigoFinal, nome, descricao || null, categoria_id || null,
+                    codigoFinal, tipo || 'produto', nome, descricao || null, categoria_id || null,
                     marca || null, modelo || null, cor || null, tamanho || null,
-                    custo, venda, margem.toFixed(2)
+                    unidade_medida || 'UN', custo, venda, margem.toFixed(2),
+                    parseFloat(comissao) || 0,
+                    enviar_sms_previsao ? 1 : 0,
+                    parseInt(previsao_retorno_dias) || 0
                 ]
             );
 
@@ -214,8 +220,9 @@ const atualizar = async (req, res) => {
 
         const { id } = req.params;
         const {
-            codigo, nome, descricao, categoria_id, marca, modelo,
-            cor, tamanho, preco_custo, preco_venda, ativo
+            codigo, tipo, nome, descricao, categoria_id, marca, modelo,
+            cor, tamanho, unidade_medida, preco_custo, preco_venda,
+            comissao, enviar_sms_previsao, previsao_retorno_dias, ativo
         } = req.body;
 
         const existentes = await executeQuery('SELECT * FROM produtos WHERE id = ?', [id]);
@@ -239,15 +246,21 @@ const atualizar = async (req, res) => {
 
         await executeQuery(
             `UPDATE produtos SET
-             codigo = ?, nome = ?, descricao = ?, categoria_id = ?,
-             marca = ?, modelo = ?, cor = ?, tamanho = ?,
-             preco_custo = ?, preco_venda = ?, margem_lucro = ?, ativo = ?
+             codigo = ?, tipo = ?, nome = ?, descricao = ?, categoria_id = ?,
+             marca = ?, modelo = ?, cor = ?, tamanho = ?, unidade_medida = ?,
+             preco_custo = ?, preco_venda = ?, margem_lucro = ?,
+             comissao = ?, enviar_sms_previsao = ?, previsao_retorno_dias = ?, ativo = ?
              WHERE id = ?`,
             [
                 codigo || existentes[0].codigo,
+                tipo || existentes[0].tipo || 'produto',
                 nome, descricao || null, categoria_id || null,
                 marca || null, modelo || null, cor || null, tamanho || null,
+                unidade_medida || 'UN',
                 custo, venda, margem.toFixed(2),
+                parseFloat(comissao) || 0,
+                enviar_sms_previsao ? 1 : 0,
+                parseInt(previsao_retorno_dias) || 0,
                 ativo !== undefined ? (ativo ? 1 : 0) : existentes[0].ativo,
                 id
             ]
