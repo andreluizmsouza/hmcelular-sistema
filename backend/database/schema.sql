@@ -161,6 +161,51 @@ CREATE TABLE IF NOT EXISTS movimentacoes_estoque (
     INDEX idx_usuario (usuario_id)
 );
 
+-- ============================================
+-- INVENTÁRIO FÍSICO (Fase 2)
+-- ============================================
+-- Cabeçalho do inventário: representa uma sessão de contagem
+CREATE TABLE IF NOT EXISTS inventarios (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    loja_id INT NOT NULL,
+    categoria_id INT NULL,
+    status ENUM('aberto', 'fechado', 'cancelado') DEFAULT 'aberto',
+    observacoes TEXT,
+    usuario_abertura_id INT,
+    usuario_fechamento_id INT NULL,
+    total_itens INT DEFAULT 0,
+    itens_contados INT DEFAULT 0,
+    itens_com_divergencia INT DEFAULT 0,
+    iniciado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    finalizado_em TIMESTAMP NULL,
+    FOREIGN KEY (loja_id) REFERENCES lojas(id) ON DELETE CASCADE,
+    FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE SET NULL,
+    FOREIGN KEY (usuario_abertura_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+    FOREIGN KEY (usuario_fechamento_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_loja (loja_id),
+    INDEX idx_status (status),
+    INDEX idx_iniciado_em (iniciado_em)
+);
+
+-- Itens do inventário: snapshot do saldo no início + contagem
+CREATE TABLE IF NOT EXISTS inventario_itens (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    inventario_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    quantidade_sistema INT NOT NULL,
+    quantidade_contada INT NULL,
+    diferenca INT NULL,
+    observacoes TEXT,
+    contado_em TIMESTAMP NULL,
+    contado_por INT NULL,
+    FOREIGN KEY (inventario_id) REFERENCES inventarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE,
+    FOREIGN KEY (contado_por) REFERENCES usuarios(id) ON DELETE SET NULL,
+    UNIQUE KEY uk_inventario_produto (inventario_id, produto_id),
+    INDEX idx_inventario (inventario_id),
+    INDEX idx_produto (produto_id)
+);
+
 -- Limpar sessões expiradas automaticamente
 -- Criar evento para limpeza automática (se suportado)
 SET GLOBAL event_scheduler = ON;

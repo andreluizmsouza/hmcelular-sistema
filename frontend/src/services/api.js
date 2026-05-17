@@ -204,6 +204,34 @@ export const productService = {
   }
 };
 
+// Inventário físico
+export const inventarioService = {
+  async listar(params) {
+    return api.get(`/inventarios${buildQuery(params)}`);
+  },
+  async obter(id) {
+    return api.get(`/inventarios/${id}`);
+  },
+  async listarItens(id, params) {
+    return api.get(`/inventarios/${id}/itens${buildQuery(params)}`);
+  },
+  async criar(dados) {
+    return api.post('/inventarios', dados);
+  },
+  async contarItem(id, itemId, dados) {
+    return api.put(`/inventarios/${id}/itens/${itemId}`, dados);
+  },
+  async previewFechamento(id) {
+    return api.get(`/inventarios/${id}/preview-fechamento`);
+  },
+  async fechar(id) {
+    return api.post(`/inventarios/${id}/fechar`);
+  },
+  async cancelar(id) {
+    return api.post(`/inventarios/${id}/cancelar`);
+  }
+};
+
 // Estoque
 export const stockService = {
   async listar(params) {

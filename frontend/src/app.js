@@ -7,6 +7,7 @@ import {
 import { authService, healthService, apiUtils } from './services/api';
 import PaginaProdutos from './pages/Produtos';
 import PaginaEstoque from './pages/Estoque';
+import PaginaInventario from './pages/Inventario';
 
 const SistemaHMCelular = () => {
   // Estados principais
@@ -239,6 +240,7 @@ const SistemaHMCelular = () => {
       { id: 'dashboard', icon: BarChart3, label: 'Dashboard', permissao: null },
       { id: 'produtos', icon: Package, label: 'Produtos', permissao: 'produtos' },
       { id: 'estoque', icon: Store, label: 'Estoque', permissao: 'estoque' },
+      { id: 'inventario', icon: FileText, label: 'Inventário', permissao: 'estoque' },
       { id: 'vendas', icon: ShoppingCart, label: 'Vendas', permissao: 'vendas' },
       { id: 'clientes', icon: Users, label: 'Clientes', permissao: 'clientes' },
       { id: 'relatorios', icon: FileText, label: 'Relatórios', permissao: 'relatorios' },
@@ -599,6 +601,8 @@ const SistemaHMCelular = () => {
         return <PaginaProdutos onAbrirMenu={() => setSidebarOpen(true)} />;
       case 'estoque':
         return <PaginaEstoque onAbrirMenu={() => setSidebarOpen(true)} currentUser={currentUser} />;
+      case 'inventario':
+        return <PaginaInventario onAbrirMenu={() => setSidebarOpen(true)} currentUser={currentUser} />;
       case 'vendas':
         return <PaginaEmDesenvolvimento titulo="Vendas" />;
       case 'clientes':

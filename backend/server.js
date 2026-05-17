@@ -8,6 +8,7 @@ const authRoutes = require('./routes/auth');
 const categoriasRoutes = require('./routes/categorias');
 const produtosRoutes = require('./routes/produtos');
 const estoqueRoutes = require('./routes/estoque');
+const inventariosRoutes = require('./routes/inventarios');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -61,6 +62,7 @@ app.use('/api/auth', loginLimiter, authRoutes);
 app.use('/api/categorias', categoriasRoutes);
 app.use('/api/produtos', produtosRoutes);
 app.use('/api/estoque', estoqueRoutes);
+app.use('/api/inventarios', inventariosRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
